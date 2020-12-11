@@ -7,6 +7,7 @@ library(ggplot2)
 theme_set(theme_bw())
 library(DT)
 library(lubridate)
+library(htmltools)
 
 
 header <- dashboardHeader(title = "COVID-19")
@@ -29,21 +30,21 @@ frow1 <- fluidRow(
     valueBoxOutput("output_recovered"),
     
     box(
-        title = "Mapa de casos",
+        title = "Mapa de muertes",
         status = "primary",
         solidHeader = TRUE,
         collapsible = FALSE,
         leafletOutput(outputId = "covid_map")
     ),
     box(
-        title = "Variacion diaria por pais",
+        title = "Tendencia de casos confirmados",
         status = "primary",
         solidHeader = TRUE,
         collapsible = FALSE,
         plotOutput("render_plot_daily")
     ),
     box(
-        title = "Detalle",
+        title = "Detalle de recuperados",
         status = "primary",
         solidHeader = TRUE,
         collapsible = FALSE,
