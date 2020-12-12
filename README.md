@@ -162,13 +162,29 @@ Los contadores que se muestran en la parte superior de la aplicación se actuali
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-2.png">
 
-**4.3 Mapa de muertes**
+**4.3 Mapas interactivos**
 
-El mapa interactivo despliega un marcador sobre el pais que se seleccionó y además al posicionarse por encima de la burbuja devuelve la cantidad de muertes. El tamaño y color de cada burbuja pintada en el mapa varía dependiendo de la cantidad de muertes reportadas en el pais.
+Cada mapa despliega un marcador sobre el pais que se selecciona y además al posicionarse por encima de la burbuja devuelve la cantidad de casos confirmados, muertes o recuperados, según sea el caso. El tamaño y color de cada burbuja pintada en el mapa varía dependiendo de la cantidad de casos reportados en cada país.
+
+**4.3.1 Mapa de casos confirmados**
+
+<img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-7.png">
+
+**4.3.2 Mapa de muertes**
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-3.png">
 
-**4.4 Detalle de casos recuperados**
+**4.3.3 Mapa de recuperados**
+
+<img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-8.png">
+
+**4.4 Tendencia de casos confirmados**
+
+La gráfica de líneas muestra el comportamiento de casos confirmados a lo largo de los meses desde que aparecío la enfermedad.
+
+<img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-9.png">
+
+**4.5 Detalle de casos recuperados**
 
 La siguiente tabla muestra el detalle de casos recuperados en un pais específico. En la columna **cantidad** se muestra una franja celeste que varía su intensidad dependiendo del día que más recuperaciones se han presentado.
 
