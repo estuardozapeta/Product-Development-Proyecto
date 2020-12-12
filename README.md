@@ -12,7 +12,23 @@ A continuación archivos de referencia a la aplicación:
 
 #### **Desarrollo** 
 
-**1. Archivos proveidos**
+**2. Configuración de DAG**
+
+Se configura la siguiente variable para establecer la ruta de los archivos de entrada.
+
+<img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-5.png">
+ 
+Los siguientes parametros corresponden a las credenciales de conexión a la Base de Datos PostgreSQL.
+
+<img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-6.png">
+
+La siguiente imagen representa el flujo del proceso del DAG cuando se encuentra en ejecución.
+
+<img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-11.png">
+
+A continuación se listan los archivos que se trasladaron con la data correspondiente a casos confirmados, muertes y recuperaciones de COVID-19.
+
+**3. Archivos proveidos**
 
 A continuación se listan los archivos que se trasladaron con la data correspondiente a casos confirmados, muertes y recuperaciones de COVID-19.
 
@@ -20,7 +36,7 @@ A continuación se listan los archivos que se trasladaron con la data correspond
 * time_series_covid19_deaths_global.csv
 * time_series_covid19_recovered_global.csv
 
-**2. Estructura de la base de datos (PostgreSQL)**
+**4. Estructura de la base de datos (PostgreSQL)**
 
 Las tres tablas poseen la misma estructura, se hizo de esta manera por facilidad y manipulación de los datos.
 
@@ -56,7 +72,7 @@ create table recovered(
 
 ```
 
-**3. Transformación de datos y programación de DAG**
+**5. Transformación de datos y programación de DAG**
 
 El script de python que realiza la transformación requiere de las siguientes librerias, algunas como **pandas** para almacenar los datos en un Dataframe y **airflow** en su mayoría que se encarga de crear workflows de forma programática y, además, planificarlos y monitorizarlos de forma centralizada.
 
@@ -84,7 +100,6 @@ FILE_NAME = "time_series_covid19_confirmed_global.csv"
 La siguiente función se utiliza para realizar la transformación de los datos. El proceso se encarga de recorrer el archivo CSV, transformar los datos tipo DATE a un formato específico y de sumarizar los valores filtrados por fecha y país.
 
 ```python
-def etl_process(**kwargs):
     file_path = FSHook(conn_id = FILE_CONNECTION_ID).get_path()
     full_path = f'{file_path}/{FILE_NAME}'
     df = pd.read_csv(full_path, encoding = "ISO-8859-1")
@@ -95,12 +110,17 @@ def etl_process(**kwargs):
     lon = []
     date=[]
     val = []
+    
     fila = 0
     for idx,item in df.iterrows():
         fila += 1
         for coldate in total_cols[4:]:
             prov.append(item['Province/State'])
-            country.append(item['Country/Region'])
+            if str(item['Province/State']) == 'nan':
+                country.append(item['Country/Region'])
+            else:
+                country.append(item['Country/Region'] + '(' + item['Province/State'] + ')')
+            
             lat.append(item['Lat'])
             lon.append(item['Long'])
             date_time_obj = datetime.strptime(coldate, '%m/%d/%y')
@@ -110,12 +130,18 @@ def etl_process(**kwargs):
     d = {'provincia':prov, 'country': country, 'lat': lat, 'long': lon, 'dates': date, 'value':val}
     carga = pd.DataFrame(data=d)
     locallog = pd.DataFrame({'tipo':['confirmed'], 'fecha':[datetime.now()]})
-
+    resumen = carga.groupby(['dates']).sum()
+    resumen = resumen.reset_index()
+    resumen['provincia'] = ''
+    resumen['country'] = '-Global-'
+    resumen['lat'] = None
+    resumen['long'] = None
+    carga = carga.append(resumen)
     psql_connection = PostgresHook('pgsql').get_sqlalchemy_engine()
     with psql_connection.begin() as connection:
         connection.execute("truncate confirmed")
         carga.to_sql('confirmed', con=connection, if_exists='append', index=False)
-        locallog.to_sql('log_carga', con=connection, if_exists='append', index=False)        
+        locallog.to_sql('log_carga', con=connection, if_exists='append', index=False)    
 ```
 
 A continuación se crea el workflow para programar la carga a la base de datos, el proceso consiste en recoger la data transformada e insertarla en la estructura creada en Postgres.
@@ -148,43 +174,43 @@ etl_operator = PythonOperator(dag = dag,
 file_sensor_task >> etl_operator
 ```
 
-**4. Shiny App**
+**6. Shiny App**
 
-**4.1 Vista general de la aplicación**
+**6.1 Vista general de la aplicación**
 
 Al interactuar con los input que se encuentran del lado izquierdo, automáticamente se renderizan los indicadores, gráficas y resto de componentes del panel derecho.
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-1.png">
 
-**4.2 Contador de casos confirmados, muertes y recuperados**
+**6.2 Contador de casos confirmados, muertes y recuperados**
 
 Los contadores que se muestran en la parte superior de la aplicación se actualizan dependiendo de la fecha o pais seleccionado.
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-2.png">
 
-**4.3 Mapas interactivos**
+**6.3 Mapas interactivos**
 
 Cada mapa despliega un marcador sobre el pais que se selecciona y además al posicionarse por encima de la burbuja devuelve la cantidad de casos confirmados, muertes o recuperados, según sea el caso. El tamaño y color de cada burbuja pintada en el mapa varía dependiendo de la cantidad de casos reportados en cada país.
 
-**4.3.1 Mapa de casos confirmados**
+**6.3.1 Mapa de casos confirmados**
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-7.png">
 
-**4.3.2 Mapa de muertes**
+**6.3.2 Mapa de muertes**
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-3.png">
 
-**4.3.3 Mapa de recuperados**
+**6.3.3 Mapa de recuperados**
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-8.png">
 
-**4.4 Tendencia de casos confirmados**
+**6.4 Tendencia de casos confirmados**
 
 La gráfica de líneas muestra el comportamiento de casos confirmados a lo largo de los meses desde que aparecío la enfermedad.
 
 <img src="https://raw.githubusercontent.com/estuardozapeta/Product-Development-Proyecto/main/image-9.png">
 
-**4.5 Detalle de casos recuperados**
+**6.5 Detalle de casos recuperados**
 
 La siguiente tabla muestra el detalle de casos recuperados en un pais específico. En la columna **cantidad** se muestra una franja celeste que varía su intensidad dependiendo del día que más recuperaciones se han presentado.
 
